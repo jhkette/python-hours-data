@@ -18,62 +18,37 @@ def return_break (breaks, start):
     # Handle if PM is in the break string
     # you need to change this with an or statement to make it shorter
     #basically get rid of PM in breaks if else statement
-    if 'PM' in breaks:
-        print(first)
-        print('FIRST PRINTING')
-        if (len(first[0]) == 1):
-            if(int(first[0]) < 9):
-                new = int(first[0]) + 12
-                final_break_start = str(new) +':00'
-                print(final_break_start)
-                print('THIS IS IMPORTANT ')
-            else: final_break_start =first[0] + ':00'
-        else: 
-            mins = first[0].split('.')
-            hour = int(mins[0]) + 12
-            mins = ':'+mins[1] 
-            final_break_start = str(hour) + mins
+    
+    #  deal with one integer first numbers 
+    if (len(first[0]) == 1):
+        if((int(first[0]) < 9) or 'PM' in breaks):
+            new = int(first[0]) + 12
+            final_break_start = str(new) +':00'
             print(final_break_start)
+            print('THIS IS IMPORTANT ')
+        else: 
+            final_break_start = first[0] + ':00'
+    else: 
+        mins = first[0].split('.')
+        hour = int(mins[0]) + 12
+        mins = ':'+mins[1] 
+        final_break_start = str(hour) + mins
+        print(final_break_start)
 
-        if len(first[1]) == 1:
-              if(int(first[1]) < 9):
-                new1 = int(first[1]) + 12
-                final_break_end = str(new1) +':00'
-                print('THIS IS IMPORTANT ')
-        else:
-            mins = first[1].split('.')
-            # mins = first[1].split(':')
-            hour = int(mins[0]) + 12
-            mins = ':'+mins[1] 
-            final_break_end = str(hour) + mins
-            print(final_break_end)
-            # NEED TO ACCOUNT FOR 3-4 without pm here
+    if (len(first[1]) == 1):
+        if((int(first[1]) < 9) or 'PM' in breaks):
+            new = int(first[1]) + 12
+            final_break_end = str(new) +':00'
+            print(final_break_end )
+            print('THIS IS IMPORTANT ')
+        else: final_break_end  =first[1] + ':00'
     else:
-        if (len(first[0]) == 1):
-            if(int(first[0]) < 9):
-                new = int(first[0]) + 12
-                final_break_start = str(new) +':00'
-                print(final_break_start)
-                print('THIS IS IMPORTANT ')
-            else: final_break_start =first[0] + ':00'
-        elif (len(first[0]) == 2):
-            final_break_start = str(first[0]) +':00'
-            print(final_break_start)
-        else: 
-            final_break_start = first[0].replace('.', ':')
-            print(final_break_start)
-        if len(first[1]) == 1:
-            if(int(first[1]) < 9):
-                new1 = int(first[1]) + 12
-                final_break_end = str(new1) +':00'
-                print('THIS IS IMPORTANT ')
-            else: final_break_end =first[1] + ':00'
-        elif len(first[1]) == 2:
-            final_break_end = str(first[1]) +':00'
-            print(final_break_end)
-        else: 
-            final_break_end = first[1].replace('.', ':')
-            print(final_break_end)
+        mins = first[1].split('.')
+        # mins = first[1].split(':')
+        hour = int(mins[0]) + 12
+        mins = ':'+mins[1] 
+        final_break_end = str(hour) + mins
+        print(final_break_end)
     return final_break_start, final_break_end 
 
 
