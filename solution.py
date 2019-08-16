@@ -9,17 +9,15 @@ import pandas as pd
 # THE THING YOU NEED TO FIX IS 4:30 - 5:30
 # Look at 4:30 - 5:30pm - this works fine
 
+
+# The earlist time work starts in dataset is 9 - so if the
+# break time is less than 9 i'm assuming it in the PM
 def return_break (breaks, start):
     final_break_start ='' 
     final_break_end ='' 
     br_values = breaks.split('-') 
     br_val = [b.strip('PM') for b in br_values]
     first = [b.strip(' ') for b in br_val]
-    # Handle if PM is in the break string
-    # you need to change this with an or statement to make it shorter
-    #basically get rid of PM in breaks if else statement
-    
-    #  deal with one integer first numbers 
     if (len(first[0]) == 1):
         if((int(first[0]) < 9) or 'PM' in breaks):
             new = int(first[0]) + 12
@@ -30,7 +28,9 @@ def return_break (breaks, start):
             final_break_start = first[0] + ':00'
     else: 
         mins = first[0].split('.')
-        hour = int(mins[0]) + 12
+        hour = int(mins[0]) 
+        if hour < 9 or 'PM' in breaks:
+            hour + 12
         mins = ':'+mins[1] 
         final_break_start = str(hour) + mins
         print(final_break_start)
@@ -44,8 +44,9 @@ def return_break (breaks, start):
         else: final_break_end  =first[1] + ':00'
     else:
         mins = first[1].split('.')
-        # mins = first[1].split(':')
-        hour = int(mins[0]) + 12
+        hour = int(mins[0])
+        if hour < 9 or 'PM' in breaks:
+            hour + 12
         mins = ':'+mins[1] 
         final_break_end = str(hour) + mins
         print(final_break_end)
