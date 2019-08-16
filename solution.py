@@ -54,12 +54,11 @@ def return_break (breaks):
 
 def process_shifts(path_to_csv):
     # create a list of times from 00:00 to 23:00
-    times = pd.date_range(start=pd.Timestamp('00:00'), end=pd.Timestamp('23:00'), freq='60T').strftime('%H:%M')
+    times = pd.date_range(start=pd.Timestamp('08:00'), end=pd.Timestamp('23:00'), freq='60T').strftime('%H:%M')
     hours_dict = dict.fromkeys(times, 0) 
-    with open(path_to_csv, 'r') as csv_file:
-        try:
+    try:
+        with open(path_to_csv, 'r') as csv_file:
             csv_reader = csv.reader(csv_file, skipinitialspace=True)
-            
             next(csv_reader) #skip header
             for line in csv_reader:
                 if line: #check for blank line
@@ -68,7 +67,7 @@ def process_shifts(path_to_csv):
                     ls = lst.delete(-1)
                     for l in ls:
                         value = l[:2]+':00'
-                        f_wage = Decimal(.5 * wage).quantize(Decimal("1.000"))
+                        f_wage = Decimal(.5 * wage).quantize(Decimal("1.0000"))
                         hours_dict[value] += f_wage
                     # managing breaks data
                     final_break_start, final_break_end = return_break(breaks)
@@ -77,23 +76,23 @@ def process_shifts(path_to_csv):
                     fin = breaktime.delete(-1) #delete last instance of list 
                     for f in fin:
                         b = f[:2]+':00'
-                        f_break = Decimal((1/6) * wage).quantize(Decimal("1.000"))
+                        f_break = Decimal((1/6) * wage).quantize(Decimal("1.0000"))
                         hours_dict[b] -= f_break
 
             for k,v in hours_dict.items():
                 new = int(v)  
                 hours_dict[k] = new
             return hours_dict     
-        except IOError:
-            print ("Could not read file:",path_to_csv)
-            sys.exit()
+    except IOError:
+        print ("Could not read file:",path_to_csv)
+        sys.exit()
 
             
 def process_sales(path_to_csv):   
-    times = pd.date_range(start=pd.Timestamp('00:00'), end=pd.Timestamp('23:00'), freq='60T').strftime('%H:%M')
-    hours_dict = dict.fromkeys(times, 0) 
-    with open('transactions.csv', 'r') as csv_file:
-        try:
+    times = pd.date_range(start=pd.Timestamp('08:00'), end=pd.Timestamp('23:00'), freq='60T').strftime('%H:%M')
+    hours_dict = dict.fromkeys(times, 0)
+    try:
+         with open('transactions.csv', 'r') as csv_file:
             csv_reader = csv.reader(csv_file, skipinitialspace=True)
             next(csv_reader)
             for line in csv_reader:
@@ -103,54 +102,51 @@ def process_sales(path_to_csv):
                     time_ch =  time_list[0]+ ':00'
                     if time_ch in hours_dict:
                         hours_dict[time_ch] += sales 
-                    else:
-                        print('nope')
             for k,v in hours_dict.items():
                     new = float(v)  
                     hours_dict[k] = new
             return hours_dict
-        except IOError:
-                print ("Could not read file:")
-                sys.exit()
+    except IOError:
+        print ("Could not read file:")
+        sys.exit()
 
 
-data = process_shifts('./data.csv')
-data2 = process_sales('./transactions.csv')
+shifts = process_shifts('./data.csv')
+sales = process_sales('./transactions.csv')
 
-print(data)
-print(data2)
+print(shifts)
+print(sales)
+
+def percentage(shift, sale):
+    if shift >= sale:
+        return sale - shift
+    else: 
+        percentage =(shift/sale) * 100
+        return percentage
+
 
 
 def compute_percentage(shifts, sales):
-    times = pd.date_range(start=pd.Timestamp('00:00'), end=pd.Timestamp('23:00'), freq='60T').strftime('%H:%M')
-    hours_dict = dict.fromkeys(times, 0) 
+    times = pd.date_range(start=pd.Timestamp('08:00'), end=pd.Timestamp('23:00'), freq='60T').strftime('%H:%M')
+    hours_dict = dict.fromkeys(times, 0)
+    for k in hours_dict:
+        value = percentage(shifts[k], sales[k])
+        f_value = round(value)
+        print(f_value)
+        hours_dict[k] = f_value
+    print(hours_dict)
+
+
+
+compute_percentage(shifts, sales)
+
+def best_and_worst_hour(percentages):
+#  #######IMPORTANT #######
     
+# import collections
 
-    
+# sorted_dict = collections.OrderedDict(sorted_x)  
 
-        # deduct breaks
-        # you need to explode at '-'
-          
-            
-# print(times)
-# print(hours)
-# minimun = min(hours)
-# maximun = max(hours)
-
-# hourlist = list(range(minimun, maximun)
-# print(hourlist)
-
-# a = [1,2,3,4]
-# d = dict.fromkeys(a, 0)
-
-# hours = [[datetime.time(i).strftime("%H:%M"), 0] for i in range(9,24)]
-# hours_dict = dict(hours)
-
-
-
-
-
-
-
+  
   
 
