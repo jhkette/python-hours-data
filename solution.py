@@ -1,7 +1,5 @@
 import csv
 import pandas as pd
-
-
 # https://github.com/pandas-dev/pandas
 # https://pandas.pydata.org/
 # I'm using the pandas library to manipulate time data. 
@@ -11,7 +9,7 @@ import pandas as pd
 
 
 # The earlist time work starts in dataset is 9 - so if the
-# break time is less than 9 i'm assuming it in the PM
+# break time is less than or equal to 9 i'm assuming it in the PM
 def return_break (breaks):
     final_break_start ='' 
     final_break_end ='' 
@@ -55,32 +53,38 @@ def return_break (breaks):
     return final_break_start, final_break_end 
 
 
+def process_shifts(path_to_csv):
 
+    # create a list of times from 00:00 to 23:00
+    times = pd.date_range(start=pd.Timestamp('00:00'), end=pd.Timestamp('23:00'), freq='60T').strftime('%H:%M')
+    hours_dict = dict.fromkeys(times, 0) 
+    with open(path_to_csv, 'r') as csv_file:
+        try:
+            csv_reader = csv.reader(csv_file, skipinitialspace=True)
+            
+            for line in csv_reader:
+                start, end,  wage, breaks = line[0], line[1], int(line[2]), line[3]
+                lst = pd.date_range(start=pd.Timestamp(start), end=pd.Timestamp(end), freq='30T').strftime('%H:%M')
+                ls = lst.delete(-1)
+                for l in ls:
+                    value = l[:2]+':00'
+                    hours_dict[value] += (.5 * wage)
+                # managing breaks data
+                final_break_start, final_break_end = return_break(breaks)   
+                breaktime = pd.date_range(start=pd.Timestamp(final_break_start), end=pd.Timestamp(final_break_end), freq='10T').strftime('%H:%M')
+                fin = breaktime.delete(-1) #delete last instance of list 
+                print(fin)
+                for f in fin:
+                    b = f[:2]+':00'
+                    hours_dict[b] -= ((1/6) * wage)
+            return hours_dict     
+        except IOError:
+            print ("Could not read file:",'./data.csv')
+    
 
-# create a list of times from 00:00 to 23:00
-times = pd.date_range(start=pd.Timestamp('00:00'), end=pd.Timestamp('23:00'), freq='60T').strftime('%H:%M')
-hours_dict = dict.fromkeys(times, 0) 
-with open('./data.csv', 'r') as csv_file:
-    try:
-        csv_reader = csv.reader(csv_file, skipinitialspace=True)
-        
-        for line in csv_reader:
-            start, end,  wage, breaks = line[0], line[1], int(line[2]), line[3]
-            lst = pd.date_range(start=pd.Timestamp(start), end=pd.Timestamp(end), freq='30T').strftime('%H:%M')
-            ls = lst.delete(-1)
-            for l in ls:
-                value = l[:2]+':00'
-                hours_dict[value] += (.5 * wage)
-            # managing breaks data
-            final_break_start, final_break_end = return_break(breaks, start)   
-            breaktime = pd.date_range(start=pd.Timestamp(final_break_start), end=pd.Timestamp(final_break_end), freq='10T').strftime('%H:%M')
-            fin = breaktime.delete(-1) #delete last instance of list 
-            print(fin)
-            for f in fin:
-                b = f[:2]+':00'
-                hours_dict[b] -= ((1/6) * wage)
-    except IOError:
-        print ("Could not read file:",'./data.csv')
+data = process_shifts('./data.csv')
+
+print(data)
     
 
         # deduct breaks
@@ -109,4 +113,3 @@ with open('./data.csv', 'r') as csv_file:
 
   
 
-print(hours_dict)
