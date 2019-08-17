@@ -22,34 +22,42 @@ def return_break (breaks):
     final_break_end ='' 
     br_values = breaks.split('-') 
     br_val = [b.strip('PM') for b in br_values]
-    first = [b.strip(' ') for b in br_val]
-    if not ("." or ":") in first[0]:
-        if int(first[0]) < 9 or 'PM' in breaks:
-            new = int(first[0]) + 12
+    fin_br_list = [b.strip(' ') for b in br_val]
+    if not "." in fin_br_list[0]:
+        if int(fin_br_list[0]) < 9 or 'PM' in breaks:
+            new = int(fin_br_list[0]) + 12
             final_break_start = str(new) +':00'
         else: 
-            final_break_start = first[0] + ':00'
+            final_break_start = fin_br_list[0] + ':00'
     else: 
-        mins = first[0].split('.')
+        mins = fin_br_list[0].split('.')
         hour = int(mins[0]) 
         if 'PM' in breaks or hour <= 9:
             hour = hour + 12
         mins = ':' + mins[1] 
         final_break_start = str(hour) + mins
-
-    if not ("." or ":") in first[1]:
-        if int(first[1]) <= 9 or 'PM' in breaks:
-            new = int(first[1]) + 12
+    if not "."  in fin_br_list[1]:
+        if int(fin_br_list[1]) <= 9 or 'PM' in breaks:
+            new = int(fin_br_list[1]) + 12
             final_break_end = str(new) +':00'
-        else: final_break_end  =first[1] + ':00'
+        else: final_break_end  =fin_br_list[1] + ':00'
     else:
-        mins = first[1].split('.')
+        mins = fin_br_list[1].split('.')
         hour = int(mins[0])
         if 'PM' in breaks or hour <= 9:
             hour = hour + 12
         mins = ':'+mins[1] 
         final_break_end = str(hour) + mins
     return final_break_start, final_break_end 
+
+
+
+def percentage_calc(shift, sale):
+    if shift >= sale:
+        return sale - shift
+    else: 
+        percentage =(shift/sale) * 100
+        return percentage
 
 
 def process_shifts(path_to_csv):
@@ -63,25 +71,25 @@ def process_shifts(path_to_csv):
             for line in csv_reader:
                 if line: #check for blank line
                     start, end, wage, breaks = line[3], line[1], float(line[2]), line[0]
-                    lst = pd.date_range(start=pd.Timestamp(start), end=pd.Timestamp(end), freq='30T').strftime('%H:%M')
-                    ls = lst.delete(-1)
-                    for l in ls:
-                        value = l[:2]+':00'
-                        f_wage = Decimal(.5 * wage).quantize(Decimal("1.0000"))
-                        hours_dict[value] += f_wage
+                    work_range = pd.date_range(start=pd.Timestamp(start), end=pd.Timestamp(end), freq='30T').strftime('%H:%M')
+                    work_final = work_range.delete(-1)
+                    for hour in work_final:
+                        wrk_hr = hour[:2]+':00'
+                        f_wage = Decimal(.5 * wage).quantize(Decimal("1.00000"))
+                        hours_dict[wrk_hr] += f_wage
                     # managing breaks data
                     final_break_start, final_break_end = return_break(breaks)
                     # The shortest break is 10 mins so I'm    
                     breaktime = pd.date_range(start=pd.Timestamp(final_break_start), end=pd.Timestamp(final_break_end), freq='10T').strftime('%H:%M')
-                    fin = breaktime.delete(-1) #delete last instance of list 
-                    for f in fin:
+                    br_final = breaktime.delete(-1) #delete last instance of list 
+                    for f in br_final:
                         b = f[:2]+':00'
-                        f_break = Decimal((1/6) * wage).quantize(Decimal("1.0000"))
+                        f_break = Decimal((1/6) * wage).quantize(Decimal("1.00000"))
                         hours_dict[b] -= f_break
 
-            for k,v in hours_dict.items():
-                new = int(v)  
-                hours_dict[k] = new
+            for key,value in hours_dict.items():
+                new = int(value)  
+                hours_dict[key] = new
             return hours_dict     
     except IOError:
         print ("Could not read file:",path_to_csv)
@@ -99,9 +107,9 @@ def process_sales(path_to_csv):
                 if line:
                     sales, time= Decimal(line[0]), line[1]
                     time_list = time.split(':')
-                    time_ch =  time_list[0]+ ':00'
-                    if time_ch in hours_dict:
-                        hours_dict[time_ch] += sales 
+                    time_hr =  time_list[0]+ ':00'
+                    if time_hr in hours_dict:
+                        hours_dict[time_hr] += sales 
             for k,v in hours_dict.items():
                     new = float(v)  
                     hours_dict[k] = new
@@ -114,15 +122,8 @@ def process_sales(path_to_csv):
 shifts = process_shifts('./data.csv')
 sales = process_sales('./transactions.csv')
 
-print(shifts)
-print(sales)
 
-def percentage(shift, sale):
-    if shift >= sale:
-        return sale - shift
-    else: 
-        percentage =(shift/sale) * 100
-        return percentage
+print(shifts)
 
 
 
@@ -130,23 +131,33 @@ def compute_percentage(shifts, sales):
     times = pd.date_range(start=pd.Timestamp('08:00'), end=pd.Timestamp('23:00'), freq='60T').strftime('%H:%M')
     hours_dict = dict.fromkeys(times, 0)
     for k in hours_dict:
-        value = percentage(shifts[k], sales[k])
+        value = percentage_calc(shifts[k], sales[k])
         f_value = round(value)
-        print(f_value)
+     
         hours_dict[k] = f_value
-    print(hours_dict)
+    return hours_dict
 
 
 
-compute_percentage(shifts, sales)
+p = compute_percentage(shifts, sales)
+# print(p)
 
 def best_and_worst_hour(percentages):
-#  #######IMPORTANT #######
-    
-# import collections
-
-# sorted_dict = collections.OrderedDict(sorted_x)  
+    hours = {}
+    best_worst = []
+    for key, value in sorted(percentages.items(), key=lambda item: item[1]):
+        hours.update( {key : value} )
+    for key in hours:
+        if hours[key] > 0:
+            best_worst.append(key) 
+            break
+    worst = next(iter(hours))
+    best_worst.append(worst) 
+    print(best_worst)
+   
+    return best_worst
+   
 
   
   
-
+best_and_worst_hour(p)
