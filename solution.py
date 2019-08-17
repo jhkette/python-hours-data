@@ -144,10 +144,10 @@ def compute_percentage(shifts, sales):
         hours_dict[k] = f_value # add to dictionary
     return hours_dict
 
-# Here I order the list by percentage value
+# Here I order the list by percentage value dictionary
 # and select the first index which is greater than 0 (the best %)
-# There are negative numbers in current dataset but there could not be so I am 
-# checking for them. The first index will be the worst if there are negative number. If not it will 
+# There are negative numbers in current dataset - however - there could not be so I am 
+# checking for them. The first index will be the worst if there are negative numbers. If not it will 
 # be the last index
 # @param percentages: dictionary
 # @return best_worst : list 
@@ -168,7 +168,7 @@ def best_and_worst_hour(percentages):
         best_worst.append(worst) 
     else:
         h_elements = list(hours.keys())
-        worst = h_elements[-1]  
+        worst = h_elements[-1]  # if no negative numbers get last number in sorted list
         best_worst.append(worst) 
    
     return best_worst
