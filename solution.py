@@ -9,18 +9,23 @@ getcontext().rounding = ROUND_FLOOR
 # https://pandas.pydata.org/
 # I'm using the pandas library to manipulate time data. 
 
-# I'm also importing python's decimal library - i'm using this
+# I'm also importing python's decimal module - i'm using this
 # to avoid floating point errors. It also make data more readbale for debugging
 
 
+
+#  @param breaks string
+#  @return final_break_start, final_break_end string
+# This function reformats break times to HH:MM based on format
 # The earlist time work starts in dataset is 9 - so if the
 # break time is less than or equal to 9 i'm assuming it in the PM
+
 def return_break (breaks):
     final_break_start ='' 
     final_break_end ='' 
     br_values = breaks.split('-') 
-    br_val = [b.strip('PM') for b in br_values]
-    fin_br_list = [b.strip(' ') for b in br_val]
+    br_val = [b.strip('PM') for b in br_values] #remove PM
+    fin_br_list = [b.strip(' ') for b in br_val] # remove ' ' white space
     if not "." in fin_br_list[0]:
         if int(fin_br_list[0]) < 9 or 'PM' in breaks:
             new = int(fin_br_list[0]) + 12
@@ -63,6 +68,14 @@ def percentage_calc(shift, sale):
         return percentage
 
 
+#  
+# Calculate shift costs. I create a dictionary of hours with 0 as initial value.
+# Then I create another list of times - each 30min (the work times are in 30min blocks) and add wage
+# to the initial hours dictionary. I use a similar principle to deduct break times. 
+#  @param path_to_csv
+#  @return Dictionary
+# 
+
 def process_shifts(path_to_csv):
     # create a list of times from 08:00 to 23:00
     times = pd.date_range(start=pd.Timestamp('08:00'), end=pd.Timestamp('23:00'), freq='60T').strftime('%H:%M')
@@ -88,12 +101,13 @@ def process_shifts(path_to_csv):
                     for f in br_final:
                         f_break = Decimal((1/6) * wage).quantize(Decimal("1.00000"))
                         hours_dict[f[:2]+':00'] -= f_break
+            # using for in loop to turn hours_dict value into an integer            
             for key,value in hours_dict.items():
                 new = int(value)  
                 hours_dict[key] = new
             return hours_dict     
     except IOError:
-        print ("Could not read file:",path_to_csv)
+        print ("Could not read file:" + path_to_csv)
         sys.exit()
 
             
@@ -109,7 +123,7 @@ def process_sales(path_to_csv):
                 if line:
                     sales, time= Decimal(line[0]), line[1]
                     time_list = time.split(':')
-                    time_hr =  time_list[0]+ ':00'
+                    time_hr = time_list[0]+ ':00'
                     if time_hr in hours_dict:
                         hours_dict[time_hr] += sales 
             for k,v in hours_dict.items():
@@ -117,15 +131,10 @@ def process_sales(path_to_csv):
                     hours_dict[k] = new
             return hours_dict
     except IOError:
-        print ("Could not read file:")
+        print ("Could not read file:" + path_to_csv)
         sys.exit()
 
 
-shifts = process_shifts('./data.csv')
-sales = process_sales('./transactions.csv')
-
-
-print(shifts)
 
 def compute_percentage(shifts, sales):
     times = pd.date_range(start=pd.Timestamp('08:00'), end=pd.Timestamp('23:00'), freq='60T').strftime('%H:%M')
@@ -138,7 +147,7 @@ def compute_percentage(shifts, sales):
 
 
 
-p = compute_percentage(shifts, sales)
+
 # print(p)
 
 def best_and_worst_hour(percentages):
@@ -156,6 +165,13 @@ def best_and_worst_hour(percentages):
     return best_worst
    
 
-  
+shifts = process_shifts('./data.csv')
+sales = process_sales('./transactions.csv')
+
+
+print(shifts)
+
+
+p = compute_percentage(shifts, sales)  
   
 best_and_worst_hour(p)
