@@ -169,8 +169,7 @@ def best_and_worst_hour(percentages):
     else:
         h_elements = list(hours.keys())
         worst = h_elements[-1]  # if no negative numbers get last number in sorted list
-        best_worst.append(worst) 
-   
+        best_worst.append(worst)
     return best_worst
    
 
