@@ -3,8 +3,6 @@ import csv
 import pandas as pd
 from decimal import *
 
-
-# getcontext().prec = 5 
 getcontext().rounding = ROUND_FLOOR
 
 # https://github.com/pandas-dev/pandas
@@ -50,9 +48,14 @@ def return_break (breaks):
         final_break_end = str(hour) + mins
     return final_break_start, final_break_end 
 
-
-
+#  
+#  calculate percentage from inputs or return loss
+#  @param shift int
+#  @param sale float
+#  @return float
+#  
 def percentage_calc(shift, sale):
+    print(shift, sale)
     if shift >= sale:
         return sale - shift
     else: 
@@ -61,7 +64,7 @@ def percentage_calc(shift, sale):
 
 
 def process_shifts(path_to_csv):
-    # create a list of times from 00:00 to 23:00
+    # create a list of times from 08:00 to 23:00
     times = pd.date_range(start=pd.Timestamp('08:00'), end=pd.Timestamp('23:00'), freq='60T').strftime('%H:%M')
     hours_dict = dict.fromkeys(times, 0) 
     try:
@@ -70,23 +73,21 @@ def process_shifts(path_to_csv):
             next(csv_reader) #skip header
             for line in csv_reader:
                 if line: #check for blank line
-                    start, end, wage, breaks = line[3], line[1], float(line[2]), line[0]
+                    start, end, wage, breaks = line[3], line[1], float(line[2]), line[0] #define variables
+                    # A list or times from start to end of work at 30 min intervals
                     work_range = pd.date_range(start=pd.Timestamp(start), end=pd.Timestamp(end), freq='30T').strftime('%H:%M')
-                    work_final = work_range.delete(-1)
+                    work_final = work_range.delete(-1) # delete final entry as this 30min is not working time
                     for hour in work_final:
-                        wrk_hr = hour[:2]+':00'
                         f_wage = Decimal(.5 * wage).quantize(Decimal("1.00000"))
-                        hours_dict[wrk_hr] += f_wage
-                    # managing breaks data
+                        hours_dict[hour[:2]+':00'] += f_wage
+                    # reformat break data to hh:mm
                     final_break_start, final_break_end = return_break(breaks)
                     # The shortest break is 10 mins so I'm    
                     breaktime = pd.date_range(start=pd.Timestamp(final_break_start), end=pd.Timestamp(final_break_end), freq='10T').strftime('%H:%M')
                     br_final = breaktime.delete(-1) #delete last instance of list 
                     for f in br_final:
-                        b = f[:2]+':00'
                         f_break = Decimal((1/6) * wage).quantize(Decimal("1.00000"))
-                        hours_dict[b] -= f_break
-
+                        hours_dict[f[:2]+':00'] -= f_break
             for key,value in hours_dict.items():
                 new = int(value)  
                 hours_dict[key] = new
@@ -96,9 +97,10 @@ def process_shifts(path_to_csv):
         sys.exit()
 
             
-def process_sales(path_to_csv):   
+def process_sales(path_to_csv):
+    # create a list of times from 08:00 to 23:00   
     times = pd.date_range(start=pd.Timestamp('08:00'), end=pd.Timestamp('23:00'), freq='60T').strftime('%H:%M')
-    hours_dict = dict.fromkeys(times, 0)
+    hours_dict = dict.fromkeys(times, 0) 
     try:
          with open('transactions.csv', 'r') as csv_file:
             csv_reader = csv.reader(csv_file, skipinitialspace=True)
@@ -125,15 +127,12 @@ sales = process_sales('./transactions.csv')
 
 print(shifts)
 
-
-
 def compute_percentage(shifts, sales):
     times = pd.date_range(start=pd.Timestamp('08:00'), end=pd.Timestamp('23:00'), freq='60T').strftime('%H:%M')
     hours_dict = dict.fromkeys(times, 0)
     for k in hours_dict:
         value = percentage_calc(shifts[k], sales[k])
         f_value = round(value)
-     
         hours_dict[k] = f_value
     return hours_dict
 
@@ -153,7 +152,6 @@ def best_and_worst_hour(percentages):
             break
     worst = next(iter(hours))
     best_worst.append(worst) 
-    print(best_worst)
    
     return best_worst
    
